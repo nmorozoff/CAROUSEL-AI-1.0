@@ -124,16 +124,30 @@ Elements show data visually — before/after, pros/cons, step-by-step, compariso
 Scene: Expert in relevant environment — kitchen, office, classroom, outdoors — matching the content topic.
 Atmosphere: Educational, trustworthy, friendly expert sharing knowledge. Like a premium health or science blog.`,
       'Тёмный': `
-VISUAL STYLE: Dark Gold Premium.
-Background: Deep matte black (#0D0D0D) with subtle diagonal gold geometric lines at 30% opacity.
-Gold star light flares in upper corners.
-Colors: Gold (#C9A84C) for headlines, white for body text.
-Typography: Bold uppercase sans-serif headlines in gold.
-Lighting: Dramatic cinematic studio — golden rim light from behind, deep shadows.
-3D elements: Volumetric gold 3D objects floating to LEFT or RIGHT side at chest level only.
-NEVER place 3D objects near or behind expert's head.
-Person placement: Lower center or right, large.
-Atmosphere: Luxurious, authoritative, premium business.`,
+VISUAL STYLE: Cinematic Warm Dark — premium psychology brand.
+NO white backgrounds. NO infographics. NO diagrams.
+NO 3D floating objects. NO glowing chains or stars.
+Pure cinematic atmospheric photography.
+COLOR PALETTE: Deep warm darks — burgundy (#3D0C11), rich amber, candlelight gold, soft warm shadows.
+Text: warm gold serif for headlines, soft white for body.
+PERSON: Extract from uploaded photo if provided.
+She must be INSIDE THE SCENE — physically part of the environment, not a cutout overlay.
+Preserve exact face and appearance. Warm cinematic light falls on her naturally.
+Different atmospheric scene each slide.
+SCENES TO USE (rotate per slide):
+- Evening armchair near rainy window, candle, lamp, books
+- Standing at tall window, autumn park outside, silhouette
+- Wooden desk with single candle, dark library behind
+- Walking through autumn park at dusk, golden leaves
+- Morning window with tea, plants, soft golden light
+- Deep armchair, amber lamp light, looking upward
+- Doorway between dark room and warm lit corridor
+TEXT placement: on naturally dark areas of the photo.
+Never on bright areas. Text must be readable.
+Gold serif for headline. White for body text.
+ATMOSPHERE: Cinematic, emotional, premium therapy brand.
+Like a luxury film still. Intimate, wise, safe presence.
+NO clinical coldness. NO flat design elements.`,
       'Иллюстрированный персонаж': `
 VISUAL STYLE: 3D Illustrated Character.
 If person photo provided — create stylized 3D cartoon avatar resembling them. Professional outfit, warm expressive face.
