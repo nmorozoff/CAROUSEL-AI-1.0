@@ -31,7 +31,7 @@ const carouselStyles = [
   { id: "classic-warm", name: "Классический тёплый", samples: [] as string[] },
   { id: "light-editorial", name: "Светлый Editorial", samples: [] as string[] },
   { id: "expert-infographic", name: "Инфографика с экспертом", samples: expertSamples },
-  { id: "dark", name: "Тёмный", samples: [] as string[] },
+  { id: "dark", name: "Тёмный", samples: darkSamples },
   { id: "illustrated", name: "Иллюстрированный персонаж", samples: [] as string[] },
   { id: "infographic", name: "Схемы & Инфографика", samples: [] as string[] },
 ];
