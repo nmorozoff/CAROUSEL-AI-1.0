@@ -25,6 +25,7 @@ import darkSample6 from "@/assets/samples/dark-6.jpeg";
 import darkSample7 from "@/assets/samples/dark-7.jpeg";
 
 const expertSamples = [expertSample1, expertSample2, expertSample3, expertSample4, expertSample5, expertSample6, expertSample7];
+const darkSamples = [darkSample1, darkSample2, darkSample3, darkSample4, darkSample5, darkSample6, darkSample7];
 
 const carouselStyles = [
   { id: "classic-warm", name: "Классический тёплый", samples: [] as string[] },
