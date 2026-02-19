@@ -45,7 +45,7 @@ const illustratedSamples = [illustratedSample1, illustratedSample2, illustratedS
 
 const carouselStyles = [
   { id: "classic-warm", name: "Классический тёплый", samples: [] as string[] },
-  { id: "light-editorial", name: "Светлый Editorial", samples: [] as string[] },
+  { id: "light-editorial", name: "Светлый Editorial", samples: lightEditorialSamples },
   { id: "expert-infographic", name: "Инфографика с экспертом", samples: expertSamples },
   { id: "dark", name: "Тёмный", samples: darkSamples },
   { id: "illustrated", name: "Иллюстрированный персонаж", samples: illustratedSamples },
