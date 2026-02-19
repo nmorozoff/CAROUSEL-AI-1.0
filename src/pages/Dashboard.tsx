@@ -38,6 +38,7 @@ import illustratedSample5 from "@/assets/samples/illustrated-5.jpeg";
 import illustratedSample6 from "@/assets/samples/illustrated-6.jpeg";
 import illustratedSample7 from "@/assets/samples/illustrated-7.jpeg";
 
+const lightEditorialSamples = [lightEditorialSample1, lightEditorialSample2, lightEditorialSample3, lightEditorialSample4, lightEditorialSample5, lightEditorialSample6, lightEditorialSample7];
 const expertSamples = [expertSample1, expertSample2, expertSample3, expertSample4, expertSample5, expertSample6, expertSample7];
 const darkSamples = [darkSample1, darkSample2, darkSample3, darkSample4, darkSample5, darkSample6, darkSample7];
 const illustratedSamples = [illustratedSample1, illustratedSample2, illustratedSample3, illustratedSample4, illustratedSample5, illustratedSample6, illustratedSample7];
