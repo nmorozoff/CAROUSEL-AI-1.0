@@ -9,6 +9,13 @@ import ThemeToggle from "@/components/ThemeToggle";
 import PhotoReference from "@/components/dashboard/PhotoReference";
 import JSZip from "jszip";
 import { toast } from "sonner";
+import professionalSample1 from "@/assets/samples/professional-1.jpeg";
+import professionalSample2 from "@/assets/samples/professional-2.jpeg";
+import professionalSample3 from "@/assets/samples/professional-3.jpeg";
+import professionalSample4 from "@/assets/samples/professional-4.jpeg";
+import professionalSample5 from "@/assets/samples/professional-5.jpeg";
+import professionalSample6 from "@/assets/samples/professional-6.jpeg";
+import professionalSample7 from "@/assets/samples/professional-7.jpeg";
 import infographicSample1 from "@/assets/samples/infographic-1.jpeg";
 import infographicSample2 from "@/assets/samples/infographic-2.jpeg";
 import infographicSample3 from "@/assets/samples/infographic-3.jpeg";
@@ -51,8 +58,10 @@ const expertSamples = [expertSample1, expertSample2, expertSample3, expertSample
 const darkSamples = [darkSample1, darkSample2, darkSample3, darkSample4, darkSample5, darkSample6, darkSample7];
 const illustratedSamples = [illustratedSample1, illustratedSample2, illustratedSample3, illustratedSample4, illustratedSample5, illustratedSample6, illustratedSample7];
 
+const professionalSamples = [professionalSample1, professionalSample2, professionalSample3, professionalSample4, professionalSample5, professionalSample6, professionalSample7];
+
 const carouselStyles = [
-  { id: "professional", name: "Профессиональный", samples: [] as string[], subtitle: null, noPhoto: false },
+  { id: "professional", name: "Профессиональный", samples: professionalSamples, subtitle: null, noPhoto: false },
   { id: "light-editorial", name: "Светлый", samples: lightEditorialSamples, subtitle: null, noPhoto: false },
   { id: "expert-infographic", name: "Инфографика с экспертом", samples: expertSamples, subtitle: null, noPhoto: false },
   { id: "dark", name: "Тёмный", samples: darkSamples, subtitle: null, noPhoto: false },
