@@ -120,13 +120,13 @@ async function cleanSlideImage(
   }
 }
 
-// Generate slide content (text) using Gemini text model
+// Generate slide content (text only) using Gemini text model
 async function generateSlideContent(
   userText: string,
   funnel: string,
   style: string
-): Promise<{ slides: { title: string; content: string }[]; caption: string }> {
-  const slidePrompt = `Ты — эксперт по созданию карусельных постов для Instagram/ВКонтакте.
+): Promise<{ title: string; content: string }[]> {
+  const systemPrompt = `Ты — эксперт по созданию карусельных постов для Instagram/ВКонтакте.
 Создай 7 слайдов карусели на основе текста пользователя.
 
 Стиль оформления: ${style}
@@ -134,8 +134,44 @@ async function generateSlideContent(
 Требования к слайдам:
 - Слайд 1: Цепляющий заголовок (hook) — максимум 7 слов
 - Слайды 2-6: Полезный контент, тезисы, ключевые мысли. Каждый слайд — 1-2 коротких предложения
-- Слайд 7: Призыв к действию (CTA)${funnel ? `: ${funnel}` : " — подбери сам по теме"}`;
+- Слайд 7: Призыв к действию (CTA)${funnel ? `: ${funnel}` : " — подбери сам по теме"}
 
+Верни строго JSON без markdown блоков:
+[
+  {"title": "...", "content": "..."},
+  ...
+]
+
+Return ONLY valid complete JSON array.
+No markdown, no backticks, no truncation.`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nТекст пользователя:\n${userText}` }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini slides API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return parseJsonResponse(rawText);
+}
+
+// Generate caption (post description) using Gemini text model
+async function generateCaption(
+  userText: string,
+  funnel: string,
+): Promise<string> {
   const captionPrompt = `Ты — живой копирайтер для психологов и экспертов.
 Пишешь как человек, а не как робот.
 На основе текста ниже напиши описание для поста в Instagram.
@@ -177,71 +213,40 @@ ${funnel || "Подбери сам по теме"}
 Объём: 800-1000 символов.
 Выдай только готовый текст. Без пояснений.`;
 
-  const systemPrompt = `${slidePrompt}
-
-Также создай описание к посту (caption) для Instagram по следующим правилам:
-${captionPrompt}
-
-Верни строго JSON без markdown блоков:
-{
-  "slides": [
-    {"title": "...", "content": "..."},
-    ...
-  ],
-  "caption": "..."
-}
-
-Return ONLY valid complete JSON.
-No markdown, no backticks, no truncation.
-Ensure the JSON is fully closed with all brackets and braces.`;
-
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `${systemPrompt}\n\nТекст пользователя:\n${userText}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-        },
+        contents: [{ role: "user", parts: [{ text: captionPrompt }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
       }),
     }
   );
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini text API error ${response.status}: ${err}`);
+    console.warn(`Caption API error ${response.status}, returning empty`);
+    return "";
   }
 
   const data = await response.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+}
 
-  // Strip markdown code blocks if present
-  const rawCleaned = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+// Robust JSON parser with fallback
+function parseJsonResponse(rawText: string): any {
+  const cleaned = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
-  // Try direct parse first
   try {
-    return JSON.parse(rawCleaned);
+    return JSON.parse(cleaned);
   } catch (e) {
     console.warn("Direct JSON parse failed, attempting extraction...");
-    // Try to find valid JSON object within the string
-    const match = rawCleaned.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/[\[\{][\s\S]*[\]\}]/);
     if (match) {
       try {
         return JSON.parse(match[0]);
       } catch (e2) {
-        // Try fixing common issues
         const fixed = match[0]
           .replace(/,\s*}/g, "}")
           .replace(/,\s*]/g, "]")
@@ -249,11 +254,11 @@ Ensure the JSON is fully closed with all brackets and braces.`;
         try {
           return JSON.parse(fixed);
         } catch (e3) {
-          throw new Error(`Failed to parse Gemini response: ${rawCleaned.substring(0, 200)}`);
+          throw new Error(`Failed to parse Gemini response: ${cleaned.substring(0, 200)}`);
         }
       }
     }
-    throw new Error(`Invalid JSON from Gemini: ${rawCleaned.substring(0, 200)}`);
+    throw new Error(`Invalid JSON from Gemini: ${cleaned.substring(0, 200)}`);
   }
 }
 
@@ -526,13 +531,14 @@ serve(async (req) => {
     console.log(`Generating slides for style: ${style}`);
     const startTime = Date.now();
 
-    // Step 1: Generate slide content (text) + SEO meta in parallel
-    const [{ slides: slideContents, caption }, seoMeta] = await Promise.all([
+    // Step 1: Generate slide content (text), caption, and SEO meta in parallel
+    const [slideContents, caption, seoMeta] = await Promise.all([
       generateSlideContent(userText, funnel || "", style || "Профессиональный"),
+      generateCaption(userText, funnel || ""),
       generateSeoMeta(userText),
     ]);
 
-    console.log(`Generated ${slideContents.length} slide texts, SEO: ${seoMeta.title}`);
+    console.log(`Generated ${slideContents.length} slide texts, caption: ${caption.length} chars, SEO: ${seoMeta.title}`);
 
     // Step 2: Generate images sequentially (to avoid Gemini rate limits)
     const rawSlides: { index: number; title: string; content: string; imageBase64: string; mimeType: string; error?: string }[] = [];
