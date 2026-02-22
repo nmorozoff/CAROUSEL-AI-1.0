@@ -415,13 +415,23 @@ Do NOT create a random character.
 If no photo uploaded — do not generate anything,
 show error message to user.
 
+CRITICAL: The 3D character must be IDENTICAL
+across ALL 7 slides.
+Same hair color, same hairstyle, same face,
+same skin tone, same clothing style.
+Do NOT change the character between slides.
+Before generating each slide — reference
+the character description from slide 1
+and replicate exactly.
+
 VISUAL STYLE: 3D Illustrated Character — NO real person photo needed.
 Create a stylized friendly 3D cartoon avatar. Professional outfit, warm expressive face.
-COLOR VARIATION RULE:
-Each slide background — soft pastel gradient,
-vary the tone each slide:
-alternate between: sky blue, mint, peach,
-lavender, warm cream — each fading → white.
+Background: solid clean gradient ONLY within
+this strict palette — warm cream to white
+(#FFF8F0 → #FFFFFF).
+NO mint, NO lavender, NO purple, NO blue,
+NO teal gradients ever.
+Each slide same warm neutral family.
 Accent elements complement the background tone.
 Typography: Rounded friendly bold sans-serif.
 3D elements: Floating speech bubbles, lightbulbs, hearts, stars — placed at chest/hand level, NEVER near face.
