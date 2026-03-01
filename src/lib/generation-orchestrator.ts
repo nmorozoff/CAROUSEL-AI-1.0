@@ -64,36 +64,31 @@ async function generateInBatches(
 
     const batchResults = await Promise.all(
       batch.map(async (item) => {
-        const maxAttempts = 3;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            const data = await callEdgeFunction(token, {
-              mode: "image",
+        try {
+          const data = await callEdgeFunction(token, {
+            mode: "image",
+            slideNumber: item.slideNumber,
+            title: item.title,
+            content: item.content,
+            style,
+            userPhotos,
+            characterDescription,
+            autoStyleEnhancement,
+          });
+          if (data.imageBase64) {
+            callbacks.onSlideReady(item.slideNumber);
+            return {
               slideNumber: item.slideNumber,
               title: item.title,
               content: item.content,
-              style,
-              userPhotos,
-              characterDescription,
-              autoStyleEnhancement,
-            });
-            if (data.imageBase64) {
-              callbacks.onSlideReady(item.slideNumber);
-              return {
-                slideNumber: item.slideNumber,
-                title: item.title,
-                content: item.content,
-                imageBase64: data.imageBase64,
-                mimeType: data.mimeType,
-              };
-            }
-            console.warn(`Slide ${item.slideNumber} returned empty image (attempt ${attempt}/${maxAttempts})`);
-          } catch (err: any) {
-            console.error(`Slide ${item.slideNumber} image error (attempt ${attempt}/${maxAttempts}):`, err);
+              imageBase64: data.imageBase64,
+              mimeType: data.mimeType,
+            };
           }
+          console.warn(`Slide ${item.slideNumber} returned empty image`);
+        } catch (err: any) {
+          console.error(`Slide ${item.slideNumber} image error:`, err);
         }
-        // All attempts failed
-        console.error(`Slide ${item.slideNumber} failed after ${maxAttempts} attempts`);
         return {
           slideNumber: item.slideNumber,
           title: item.title,
@@ -195,7 +190,7 @@ export async function orchestrateGeneration(
     }));
 
     allSlides = await generateInBatches(
-      items, 3, token, style, userPhotos, undefined, callbacks, autoStyleEnhancement
+      items, 1, token, style, userPhotos, undefined, callbacks, autoStyleEnhancement
     );
   }
 
