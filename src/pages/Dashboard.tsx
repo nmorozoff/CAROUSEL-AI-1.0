@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Download, FileArchive, User, CalendarDays, Copy, Check, FileText, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, Download, FileArchive, User, CalendarDays, Copy, Check, FileText, RefreshCw, Zap } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -113,6 +114,10 @@ const Dashboard = () => {
   const [userPhotos, setUserPhotos] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const [genUsed, setGenUsed] = useState(0);
+  const [genLimit, setGenLimit] = useState(200);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const ADMIN_USER_ID = "399da17d-9727-445f-bb4b-a9e32656bac7";
 
   const selectedStyleData = carouselStyles.find(s => s.id === selectedStyle);
   const showPhotoBlock = !selectedStyleData?.noPhoto;
@@ -122,6 +127,10 @@ const Dashboard = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       setEmail(session.user.email || "");
+
+      if (session.user.id === ADMIN_USER_ID) {
+        setIsAdminUser(true);
+      }
 
       const { data } = await supabase
         .from("subscriptions")
@@ -133,6 +142,31 @@ const Dashboard = () => {
       if (data?.expires_at) {
         const diff = Math.ceil((new Date(data.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
         setDaysLeft(Math.max(0, diff));
+      }
+
+      // Fetch generation count this month
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from("generation_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .gte("created_at", monthStart.toISOString())
+        .is("error", null);
+
+      setGenUsed(count || 0);
+
+      // Get custom limit from profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("generation_limit")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (profileData?.generation_limit) {
+        setGenLimit(profileData.generation_limit);
       }
     };
     load();
@@ -351,6 +385,40 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Usage Widget */}
+        {!isAdminUser ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-4 mb-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium">
+                <Zap className="w-4 h-4 text-primary" />
+                Генерации
+              </div>
+              <span className="text-sm text-muted-foreground">{genUsed} из {genLimit}</span>
+            </div>
+            <Progress value={Math.min(100, (genUsed / genLimit) * 100)} className="h-2 mb-2" />
+            {daysLeft !== null && (
+              <p className="text-xs text-muted-foreground">
+                До окончания тарифа: {daysLeft} {daysLeft === 1 ? "день" : daysLeft < 5 ? "дня" : "дней"}
+              </p>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-4 mb-4"
+          >
+            <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
+              <Zap className="w-4 h-4" />
+              Безлимитный доступ
+            </div>
+          </motion.div>
+        )}
 
         {/* Текст для карусели */}
         <motion.div

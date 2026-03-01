@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,11 @@ import {
   Clock,
   ShieldCheck,
   X,
+  Zap,
+  RotateCcw,
+  Save,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface OverviewData {
@@ -57,10 +61,13 @@ interface EnrichedUser {
 }
 
 interface UserDetail {
-  profile: { display_name: string; email: string; created_at: string };
+  profile: { display_name: string; email: string; created_at: string; generation_limit: number | null };
   subscriptions: Array<{ id: string; plan: string; status: string; starts_at: string; expires_at: string }>;
   payments: Array<{ id: string; amount: number; plan: string; created_at: string; label: string }>;
   activity: Array<{ id: string; action: string; details: Record<string, unknown>; created_at: string }>;
+  generationLogs: Array<{ id: string; style: string; created_at: string; duration_ms: number | null; error: string | null; api_provider: string | null }>;
+  monthGenCount: number;
+  generationLimit: number;
 }
 
 const Admin = () => {
@@ -73,6 +80,8 @@ const Admin = () => {
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [tab, setTab] = useState("overview");
+  const [editingLimit, setEditingLimit] = useState<number | null>(null);
+  const [savingLimit, setSavingLimit] = useState(false);
 
   useEffect(() => {
     checkAdminAndLoad();
@@ -154,6 +163,32 @@ const Admin = () => {
       console.error("Failed to load user detail:", err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const saveUserLimit = async () => {
+    if (!selectedUserId || editingLimit === null) return;
+    setSavingLimit(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-stats?endpoint=set-limit&userId=${selectedUserId}`;
+      await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ limit: editingLimit }),
+      });
+      if (userDetail) {
+        setUserDetail({ ...userDetail, generationLimit: editingLimit });
+      }
+    } catch (err) {
+      console.error("Failed to save limit:", err);
+    } finally {
+      setSavingLimit(false);
     }
   };
 
@@ -410,6 +445,47 @@ const Admin = () => {
                               </div>
                             </div>
 
+                            {/* Generation Limit */}
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-sm font-heading font-semibold flex items-center gap-1.5">
+                                  <Zap className="w-4 h-4 text-primary" />
+                                  Генерации за месяц
+                                </h3>
+                                <span className="text-sm font-medium">
+                                  {userDetail.monthGenCount} / {userDetail.generationLimit}
+                                </span>
+                              </div>
+                              <Progress value={Math.min(100, (userDetail.monthGenCount / userDetail.generationLimit) * 100)} className="h-2 mb-3" />
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs text-muted-foreground">Лимит:</span>
+                                <Input
+                                  type="number"
+                                  className="h-7 w-24 text-xs"
+                                  defaultValue={userDetail.generationLimit}
+                                  onChange={(e) => setEditingLimit(parseInt(e.target.value) || 200)}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs gap-1"
+                                  onClick={() => { setEditingLimit(0); saveUserLimit(); }}
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  Сбросить
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs gap-1"
+                                  onClick={saveUserLimit}
+                                  disabled={savingLimit || editingLimit === null}
+                                >
+                                  {savingLimit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                  Сохранить
+                                </Button>
+                              </div>
+                            </div>
+
                             <div>
                               <h3 className="text-sm font-heading font-semibold mb-2">Подписки</h3>
                               {userDetail.subscriptions.length === 0 ? (
@@ -444,6 +520,31 @@ const Admin = () => {
                                         <Badge variant="outline" className="ml-2 text-xs">{p.plan}</Badge>
                                       </div>
                                       <span className="text-xs text-muted-foreground">{formatDateTime(p.created_at)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            <div>
+                              <h3 className="text-sm font-heading font-semibold mb-2">История генераций</h3>
+                              {userDetail.generationLogs.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Нет генераций</p>
+                              ) : (
+                                <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                                  {userDetail.generationLogs.map((g) => (
+                                    <div key={g.id} className="flex items-center gap-2 text-sm bg-secondary/20 rounded p-2">
+                                      <span className="text-xs text-muted-foreground w-28 shrink-0">
+                                        {formatDateTime(g.created_at)}
+                                      </span>
+                                      <Badge variant="outline" className="text-xs shrink-0">{g.style || "—"}</Badge>
+                                      <Badge variant={g.api_provider === "grsai" ? "secondary" : "default"} className="text-xs shrink-0">
+                                        {g.api_provider || "gemini"}
+                                      </Badge>
+                                      {g.duration_ms && (
+                                        <span className="text-xs text-muted-foreground shrink-0">{(g.duration_ms / 1000).toFixed(1)}s</span>
+                                      )}
+                                      {g.error && <Badge variant="destructive" className="text-xs shrink-0">Ошибка</Badge>}
                                     </div>
                                   ))}
                                 </div>
