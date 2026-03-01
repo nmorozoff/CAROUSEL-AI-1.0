@@ -715,8 +715,10 @@ async function generateImageGrsai(
 
   if (!imageUrl) return { imageBase64: "", mimeType: "image/png" };
 
+  console.log("[Grsai] Downloading: " + imageUrl);
   const imgResponse = await fetch(imageUrl);
-  if (!imgResponse.ok) throw new Error("Не удалось скачать изображение");
+  console.log("[Grsai] Download status: " + imgResponse.status);
+  if (!imgResponse.ok) return { imageBase64: "", mimeType: "image/png" };
   const arrayBuffer = await imgResponse.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
   let binary = "";
