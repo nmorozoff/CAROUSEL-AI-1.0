@@ -5,3 +5,4 @@ verify_jwt = false
 
 [functions.generate-slides]
 verify_jwt = false
+request_timeout_ms = 400000
