@@ -675,29 +675,41 @@ async function generateImageGrsai(
     throw new Error(`Grsai API error ${response.status}: ${err}`);
   }
 
-  const reader = response.body?.getReader();
+const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let imageUrl: string | null = null;
+  let buffer = "";
 
   while (true) {
     const { done, value } = await reader!.read();
     if (done) break;
-    const chunk = decoder.decode(value);
-    const lines = chunk.split("\n").filter((l: string) => l.trim());
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
     for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
       try {
-        const data = JSON.parse(line);
+        const data = JSON.parse(trimmed);
         if (data.status === "succeeded" && data.results?.[0]?.url) {
           imageUrl = data.results[0].url;
         }
         if (data.status === "failed") {
           throw new Error(`Grsai failed: ${data.failure_reason}`);
         }
-      } catch (e) { /* продолжаем читать */ }
+      } catch (e) { /* продолжаем */ }
     }
   }
 
-  if (!imageUrl) throw new Error("Grsai: URL изображения не получен");
+  // обработать остаток буфера
+  if (buffer.trim()) {
+    try {
+      const data = JSON.parse(buffer.trim());
+      if (data.status === "succeeded" && data.results?.[0]?.url) {
+        imageUrl = data.results[0].url;
+      }
+    } catch (e) { /* игнорируем */ }
+  }
 
   const imgResponse = await fetch(imageUrl);
   if (!imgResponse.ok) throw new Error("Не удалось скачать изображение с Grsai");
