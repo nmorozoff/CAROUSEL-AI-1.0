@@ -724,7 +724,8 @@ const reader = response.body?.getReader();
       break;
     }
     if (result?.status === "failed") {
-      throw new Error(`Grsai failed: ${result?.failure_reason}`);
+      console.error(`Grsai failed: ${result?.failure_reason}`);
+      break;
     }
   }
 
