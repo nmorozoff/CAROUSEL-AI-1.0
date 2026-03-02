@@ -553,7 +553,7 @@ const Dashboard = () => {
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
               <div className="text-center">
                 <p className="font-heading font-semibold text-lg">{generationStatus || "Генерируем слайды..."}</p>
-                <p className="text-sm text-muted-foreground mt-1">Батчевая генерация по 3 слайда ☕</p>
+                <p className="text-sm text-muted-foreground mt-1">Не обновляйте страницу и не закрывайте вкладку до окончания генерации слайдов</p>
               </div>
             </motion.div>
           )}
