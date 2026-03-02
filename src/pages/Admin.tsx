@@ -83,6 +83,11 @@ const Admin = () => {
   const [editingLimit, setEditingLimit] = useState<number | null>(null);
   const [savingLimit, setSavingLimit] = useState(false);
   const [trialDays, setTrialDays] = useState(7);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserDays, setNewUserDays] = useState(7);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createResult, setCreateResult] = useState("");
   const [givingTrial, setGivingTrial] = useState(false);
   const [trialSuccess, setTrialSuccess] = useState(false);
 
@@ -192,6 +197,41 @@ const Admin = () => {
       console.error("Failed to save limit:", err);
     } finally {
       setSavingLimit(false);
+    }
+  };
+
+  const createUser = async () => {
+    if (!newUserEmail || !newUserPassword) return;
+    setCreatingUser(true);
+    setCreateResult("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(
+        import.meta.env.VITE_SUPABASE_URL + "/functions/v1/admin-stats?endpoint=create-user",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + session.access_token,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: newUserEmail, password: newUserPassword, trialDays: newUserDays }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setCreateResult("ok");
+        setNewUserEmail("");
+        setNewUserPassword("");
+        loadUsers();
+      } else {
+        setCreateResult(data.error || "Ошибка");
+      }
+    } catch (err) {
+      setCreateResult("Ошибка");
+    } finally {
+      setCreatingUser(false);
     }
   };
 
@@ -366,6 +406,33 @@ const Admin = () => {
                   className="pl-10"
                 />
               </div>
+
+              <Card className="glass p-4 mb-4">
+                <h3 className="text-sm font-heading font-semibold mb-3 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-primary" />
+                  Создать пользователя
+                </h3>
+                <div className="flex flex-wrap gap-2 items-end">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Email</p>
+                    <Input className="h-8 text-xs w-48" placeholder="email@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Пароль</p>
+                    <Input className="h-8 text-xs w-36" type="password" placeholder="пароль" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Дней доступа</p>
+                    <Input type="number" className="h-8 text-xs w-20" value={newUserDays} min={1} onChange={(e) => setNewUserDays(parseInt(e.target.value) || 7)} />
+                  </div>
+                  <Button size="sm" className="h-8 text-xs gap-1" onClick={createUser} disabled={creatingUser || !newUserEmail || !newUserPassword}>
+                    {creatingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                    Создать
+                  </Button>
+                  {createResult === "ok" && <span className="text-xs text-green-500">Пользователь создан!</span>}
+                  {createResult && createResult !== "ok" && <span className="text-xs text-red-500">{createResult}</span>}
+                </div>
+              </Card>
 
               <Card className="glass overflow-x-auto">
                 <Table className="min-w-[500px]">
