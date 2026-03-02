@@ -60,7 +60,7 @@ async function generateInBatches(
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     const batchNum = Math.floor(i / batchSize) + 1;
-    callbacks.onStatus(`Генерация изображений: батч ${batchNum}/${Math.ceil(items.length / batchSize)}...`);
+    callbacks.onStatus(`✨ Создаём изображение ${i + 1} из ${items.length}...`);
 
     const batchResults = await Promise.all(
       batch.map(async (item) => {
@@ -195,7 +195,7 @@ export async function orchestrateGeneration(
   }
 
   // Step 3: Clean images in batches of 3
-  callbacks.onStatus("Очистка метаданных изображений...");
+  callbacks.onStatus("🎨 Финальная обработка изображений...");
   const cleanedSlides = await cleanInBatches(allSlides, 3, token, seoMeta, callbacks);
 
   const durationMs = Date.now() - startTime;
