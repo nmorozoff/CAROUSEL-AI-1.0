@@ -984,7 +984,46 @@ serve(async (req) => {
 
     // ─── MODE: text ───
     if (mode === "text") {
-      const { userText, funnel, style } = body;
+      const { userText, funnel, style, mode_ready, rawText } = body;
+
+      if (mode_ready === true && rawText) {
+        console.log("[text] Ready carousel mode — parsing via Gemini");
+        const parsePrompt = `Разбей этот текст карусели на 7 слайдов.
+Верни строго JSON без markdown — массив из 7 объектов:
+[{"title": "заголовок слайда", "content": "текст слайда"}, ...]
+Правила:
+- Ровно 7 объектов
+- title = заголовок слайда (без слова Заголовок:)
+- content = основной текст слайда (без слова Текст: или Подзаголовок:)
+- Слайд 7 берёшь как есть, ничего не меняешь
+- Только JSON, без пояснений
+ТЕКСТ КАРУСЕЛИ:
+${rawText}`;
+
+        const parseResponse = await fetch(
+          \`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=\${GEMINI_API_KEY}\`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: parsePrompt }] }],
+              generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+            }),
+          }
+        );
+        if (!parseResponse.ok) throw new Error("Gemini parse error: " + await parseResponse.text());
+        const parseData = await parseResponse.json();
+        const rawParsed = parseData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const slideContents = parseJsonResponse(rawParsed);
+        return new Response(JSON.stringify({
+          success: true,
+          slides: slideContents.slice(0, 7),
+          caption: "",
+          seoMeta: {},
+          autoStyleEnhancement: "",
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       if (!userText?.trim()) {
         return new Response(JSON.stringify({ success: false, error: "userText is required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
