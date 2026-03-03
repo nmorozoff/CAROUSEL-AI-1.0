@@ -104,6 +104,7 @@ interface SlideResult {
 const Dashboard = () => {
   const [text, setText] = useState("");
   const [cta, setCta] = useState("");
+  const [isReadyMode, setIsReadyMode] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState("professional");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -205,7 +206,8 @@ const Dashboard = () => {
         {
           onStatus: (status) => setGenerationStatus(status),
           onSlideReady: (num) => setGenerationStatus(`Слайд ${num} готов ✓`),
-        }
+        },
+        isReadyMode
       );
 
       setResults(result.slides);
@@ -462,17 +464,33 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-6 mb-4"
         >
-          <h2 className="font-heading font-semibold text-lg mb-3">Текст для Карусели</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-heading font-semibold text-lg">Текст для Карусели</h2>
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setIsReadyMode(false)}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${!isReadyMode ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Из тезисов
+              </button>
+              <button
+                onClick={() => setIsReadyMode(true)}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${isReadyMode ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Готовая карусель
+              </button>
+            </div>
+          </div>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Вставьте текст поста, тезисы, мысли, транскрибацию рилса, видео или эфира"
+            placeholder={isReadyMode ? "Вставьте готовую карусель" : "Вставьте текст поста, тезисы, мысли, транскрибацию рилса, видео или эфира"}
             className="min-h-[140px] bg-background border-2 border-border rounded-xl resize-none text-sm placeholder:text-muted-foreground/70"
           />
         </motion.div>
 
         {/* Воронка в карусели */}
-        <motion.div
+        {!isReadyMode && <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
@@ -485,7 +503,7 @@ const Dashboard = () => {
             placeholder={'Введите призыв к действию для последнего слайда.\n\nПримеры:\n• Кодовое слово: "РАЗБОР" → ИИ напишет:\n  "Напиши РАЗБОР в комментарии — пришлю личный план"\n• Директ: "Напиши мне ХОЧУ в Директ"\n• Подписка: "Подпишись чтобы не потерять"\n\nЕсли оставить поле пустым — ИИ подберёт призыв автоматически по теме карусели'}
             className="min-h-[100px] bg-background border-2 border-border rounded-xl resize-none text-sm placeholder:text-muted-foreground/70"
           />
-        </motion.div>
+        </motion.div>}
 
         {/* Фото-референс — только для стилей, где нужно фото */}
         <AnimatePresence>

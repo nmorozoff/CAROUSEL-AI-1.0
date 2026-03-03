@@ -114,18 +114,17 @@ export async function orchestrateGeneration(
   funnel: string,
   style: string,
   userPhotos: string[],
-  callbacks: GenerationCallbacks
+  callbacks: GenerationCallbacks,
+  isReadyMode: boolean = false
 ): Promise<{ slides: SlideResult[]; caption: string }> {
   const startTime = Date.now();
 
   // Step 1: Generate texts, caption, SEO
-  callbacks.onStatus("Генерация текстов и описания...");
-  const textData = await callEdgeFunction(token, {
-    mode: "text",
-    userText,
-    funnel,
-    style,
-  });
+  callbacks.onStatus(isReadyMode ? "Обработка готовой карусели..." : "Генерация текстов и описания...");
+  const textPayload = isReadyMode
+    ? { mode: "text", mode_ready: true, rawText: userText, style }
+    : { mode: "text", userText, funnel, style };
+  const textData = await callEdgeFunction(token, textPayload);
 
   if (!textData.success) throw new Error(textData.error || "Text generation failed");
 
