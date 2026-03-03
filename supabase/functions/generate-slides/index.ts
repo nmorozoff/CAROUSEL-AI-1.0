@@ -323,7 +323,7 @@ Preserve exactly: face, hair, skin, appearance.
 Person is NATURALLY IN THE SCENE — not a cutout.
 Photographed IN this office, not pasted onto background.
 Warm natural light falls on her matching room lighting.
-Her feet touch the floor.
+Her shoes touch the floor naturally.
 Her shadow falls naturally on the background.
 Light source from window on the left side.
 Her clothing edges blend naturally with surroundings.
@@ -662,7 +662,7 @@ The uploaded photos show the expert/author.
 Naturally integrate her into the scene.
 She physically EXISTS in this environment.
 Matching lighting, shadows, color temperature.
-Her feet touch the floor.
+Her shoes touch the floor naturally.
 Her shadow falls naturally on the background.
 Light source direction matches the scene.
 Her clothing edges blend naturally with surroundings.
