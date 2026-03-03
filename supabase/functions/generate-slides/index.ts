@@ -370,7 +370,7 @@ Preserve exactly: face, hair, skin, appearance.
 Person is NATURALLY IN THE SCENE — not a cutout, not pasted.
 She was photographed IN this location, not added later.
 Matching lighting, shadows, color temperature throughout.
-Her feet touch the floor. Her shadow falls naturally on the background.
+Her shoes touch the floor naturally. Her shadow falls naturally on the background.
 
 SCENE INTEGRATION — vary per slide from this list:
 - Bright Scandinavian living room, white walls, large window, morning light, linen couch
