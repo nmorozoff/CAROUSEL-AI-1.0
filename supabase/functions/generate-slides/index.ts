@@ -1,3 +1,4 @@
+// v2 deploy
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -216,7 +217,7 @@ ${funnel || "Подбери сам по теме"}
 Выдай только готовый текст. Без пояснений.`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1000,7 +1001,7 @@ serve(async (req) => {
 ${rawText}`;
 
         const parseResponse = await fetch(
-          \`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=\${GEMINI_API_KEY}\`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
