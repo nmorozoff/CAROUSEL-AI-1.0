@@ -90,6 +90,9 @@ const Admin = () => {
   const [createResult, setCreateResult] = useState("");
   const [givingTrial, setGivingTrial] = useState(false);
   const [trialSuccess, setTrialSuccess] = useState(false);
+  const [apiKeys, setApiKeys] = useState<{ gemini: string; grsai: string; preferred: string }>({ gemini: "", grsai: "", preferred: "gemini" });
+  const [savingApiKeys, setSavingApiKeys] = useState(false);
+  const [apiKeysSaved, setApiKeysSaved] = useState(false);
 
   useEffect(() => {
     checkAdminAndLoad();
@@ -166,11 +169,46 @@ const Admin = () => {
         },
       });
       const data = await response.json();
-      if (data) setUserDetail(data);
+      if (data) {
+        setUserDetail(data);
+        // Load API keys for this user
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("gemini_api_key, grsai_api_key, preferred_api")
+          .eq("user_id", userId)
+          .maybeSingle();
+        setApiKeys({
+          gemini: profile?.gemini_api_key || "",
+          grsai: profile?.grsai_api_key || "",
+          preferred: profile?.preferred_api || "gemini",
+        });
+        setApiKeysSaved(false);
+      }
     } catch (err) {
       console.error("Failed to load user detail:", err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const saveApiKeys = async () => {
+    if (!selectedUserId) return;
+    setSavingApiKeys(true);
+    setApiKeysSaved(false);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          gemini_api_key: apiKeys.gemini || null,
+          grsai_api_key: apiKeys.grsai || null,
+          preferred_api: apiKeys.preferred,
+        })
+        .eq("user_id", selectedUserId);
+      if (!error) setApiKeysSaved(true);
+    } catch (err) {
+      console.error("Failed to save API keys:", err);
+    } finally {
+      setSavingApiKeys(false);
     }
   };
 
@@ -627,6 +665,67 @@ const Admin = () => {
                                   Выдать доступ
                                 </Button>
                                 {trialSuccess && <span className="text-xs text-green-500">✓ Доступ выдан!</span>}
+                              </div>
+                            </div>
+
+                            {/* API Keys Block */}
+                            <div className="bg-secondary/30 rounded-lg p-4">
+                              <h3 className="text-sm font-heading font-semibold mb-3 flex items-center gap-1.5">
+                                <Zap className="w-4 h-4 text-accent" />
+                                Настройки API
+                              </h3>
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Основной API (ключ)</p>
+                                  <Input
+                                    className="h-7 text-xs font-mono"
+                                    placeholder="Вставьте ключ..."
+                                    value={apiKeys.gemini}
+                                    onChange={(e) => setApiKeys(k => ({ ...k, gemini: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Резервный 1 (ключ)</p>
+                                  <Input
+                                    className="h-7 text-xs font-mono"
+                                    placeholder="Вставьте ключ..."
+                                    value={apiKeys.grsai}
+                                    onChange={(e) => setApiKeys(k => ({ ...k, grsai: e.target.value }))}
+                                  />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Активный API</p>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant={apiKeys.preferred === "gemini" ? "default" : "outline"}
+                                      className="h-7 text-xs"
+                                      onClick={() => setApiKeys(k => ({ ...k, preferred: "gemini" }))}
+                                    >
+                                      Основной API
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant={apiKeys.preferred === "grsai" ? "default" : "outline"}
+                                      className="h-7 text-xs"
+                                      onClick={() => setApiKeys(k => ({ ...k, preferred: "grsai" }))}
+                                    >
+                                      Резервный 1
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="h-7 text-xs gap-1"
+                                    onClick={saveApiKeys}
+                                    disabled={savingApiKeys}
+                                  >
+                                    {savingApiKeys ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                    Сохранить
+                                  </Button>
+                                  {apiKeysSaved && <span className="text-xs text-green-500">✓ Сохранено!</span>}
+                                </div>
                               </div>
                             </div>
 
