@@ -10,9 +10,8 @@ const corsHeaders = {
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const AI_CLEANER_API_KEY = Deno.env.get("AI_CLEANER_API_KEY");
-const USE_BACKUP_API = Deno.env.get("USE_BACKUP_API") === "true";
-const GRSAI_API_KEY = Deno.env.get("GRSAI_API_KEY");
 const GRSAI_MODEL = Deno.env.get("GRSAI_MODEL") || "nano-banana-pro";
+// API keys are now per-user, read from profiles table
 
 // ─── Helpers ───
 
@@ -67,12 +66,36 @@ async function authenticateAndCheckSubscription(req: Request) {
     .eq("status", "active")
     .maybeSingle();
   if (!sub || new Date(sub.expires_at) <= new Date()) throw { status: 403, message: "Subscription required" };
-  return { userId, supabaseClient };
+
+  // Read user API keys from profile
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("gemini_api_key, grsai_api_key, preferred_api")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  // Fall back to env keys if user has no personal keys yet
+  const userGeminiKey = profile?.gemini_api_key || Deno.env.get("GEMINI_API_KEY") || "";
+  const userGrsaiKey = profile?.grsai_api_key || Deno.env.get("GRSAI_API_KEY") || "";
+  const preferredApi = profile?.preferred_api || "gemini";
+
+  // If subscription active but no keys assigned yet — show waiting screen signal
+  if (!profile?.gemini_api_key && !profile?.grsai_api_key) {
+    // No personal keys — use global fallback (admin generates with own keys)
+    console.log("[auth] User has no personal API keys, using global fallback");
+  }
+
+  return { userId, supabaseClient, userGeminiKey, userGrsaiKey, preferredApi };
 }
 
 // ─── MODE: text ───
 
-async function generateSlideContent(userText: string, funnel: string, style: string): Promise<{ title: string; content: string }[]> {
+async function generateSlideContent(userText: string, funnel: string, style: string, apiKey?: string): Promise<{ title: string; content: string }[]> {
+  const activeKey = apiKey || GEMINI_API_KEY || "";
   const funnelText = funnel || "подбери сам по теме";
   const systemPrompt = `Ты помогаешь создавать вирусные карусели для Instagram для экспертов мягких ниш (психологи, коучи, нумерологи).
 
@@ -170,7 +193,8 @@ ${funnelText}
   return slides;
 }
 
-async function generateCaption(userText: string, funnel: string): Promise<string> {
+async function generateCaption(userText: string, funnel: string, apiKey?: string): Promise<string> {
+  const activeKey = apiKey || GEMINI_API_KEY || "";
   const captionPrompt = `Ты — живой копирайтер для психологов и экспертов.
 Пишешь как человек, а не как робот.
 На основе текста ниже напиши описание для поста в Instagram.
@@ -233,10 +257,11 @@ ${funnel || "Подбери сам по теме"}
   return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 }
 
-async function generateSeoMeta(userText: string): Promise<{ title: string; keywords: string }> {
+async function generateSeoMeta(userText: string, apiKey?: string): Promise<{ title: string; keywords: string }> {
+  const activeKey = apiKey || GEMINI_API_KEY || "";
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -677,9 +702,10 @@ CONSISTENCY: Same face and hair across ALL 7 slides.
 
 async function generateImageGrsai(
   prompt: string,
-  userPhotos: string[]
+  userPhotos: string[],
+  apiKey: string
 ): Promise<{ imageBase64: string; mimeType: string }> {
-  if (!GRSAI_API_KEY) throw new Error("GRSAI_API_KEY не настроен");
+  if (!apiKey) throw new Error("Резервный API не настроен. Обратитесь в поддержку.");
 
   const requestBody: any = {
     model: GRSAI_MODEL,
@@ -700,7 +726,7 @@ async function generateImageGrsai(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer " + GRSAI_API_KEY,
+      "Authorization": "Bearer " + apiKey,
     },
     body: JSON.stringify(requestBody),
   });
@@ -769,7 +795,8 @@ async function generateOneSlideImage(
   style: string,
   userPhotos: string[],
   characterDescription?: string,
-  autoStyleEnhancement?: string
+  autoStyleEnhancement?: string,
+  apiKeys?: { geminiKey: string; grsaiKey: string; preferredApi: string }
 ): Promise<{ imageBase64: string; mimeType: string }> {
   const isLastSlide = slideNumber === 7;
   const isFirstSlide = slideNumber === 1;
@@ -833,18 +860,22 @@ CRITICAL RULE FOR 3D ELEMENTS:
     parts.push({ text: prompt });
   }
 
-  // ─── Резервное API или основной Gemini ───
-  if (USE_BACKUP_API) {
-    console.log(`[image] Slide ${slideNumber} — using Grsai backup API (model: ${GRSAI_MODEL})`);
+  // ─── Выбор API по настройке пользователя ───
+  const activeApi = apiKeys?.preferredApi || "gemini";
+  const geminiKey = apiKeys?.geminiKey || GEMINI_API_KEY || "";
+  const grsaiKey = apiKeys?.grsaiKey || "";
+
+  if (activeApi === "grsai") {
+    console.log(`[image] Slide ${slideNumber} — using Резервный 1 API (model: ${GRSAI_MODEL})`);
     const fullPrompt = parts
       .filter((p: any) => p.text)
       .map((p: any) => p.text)
       .join("\n");
-    return await generateImageGrsai(fullPrompt, hasPhotos && needsPhoto ? userPhotos : []);
+    return await generateImageGrsai(fullPrompt, hasPhotos && needsPhoto ? userPhotos : [], grsaiKey);
   }
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -977,7 +1008,8 @@ serve(async (req) => {
   try {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-    const { userId } = await authenticateAndCheckSubscription(req).catch((e: any) => { throw e; });
+    const { userId, userGeminiKey, userGrsaiKey, preferredApi } = await authenticateAndCheckSubscription(req).catch((e: any) => { throw e; });
+    const apiKeys = { geminiKey: userGeminiKey, grsaiKey: userGrsaiKey, preferredApi };
 
     const body = await req.json();
     const mode = body.mode || "text";
@@ -1029,11 +1061,11 @@ ${rawText}`;
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.log(`[text] Generating texts for style: ${style}`);
+      console.log(`[text] Generating texts for style: ${style}, api: ${preferredApi}`);
       const [slideContents, caption, seoMeta] = await Promise.all([
-        generateSlideContent(userText, funnel || "", style || "Профессиональный"),
-        generateCaption(userText, funnel || ""),
-        generateSeoMeta(userText),
+        generateSlideContent(userText, funnel || "", style || "Профессиональный", userGeminiKey),
+        generateCaption(userText, funnel || "", userGeminiKey),
+        generateSeoMeta(userText, userGeminiKey),
       ]);
       let autoStyleEnhancement = "";
       try {
@@ -1096,7 +1128,8 @@ ${rawText}`;
         style || "Профессиональный",
         userPhotos || [],
         characterDescription,
-        autoStyleEnhancement
+        autoStyleEnhancement,
+        apiKeys
       );
       // Сохраняем слайд в Supabase Storage
       let slideUrl = "";
