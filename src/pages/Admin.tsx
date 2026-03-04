@@ -196,15 +196,28 @@ const Admin = () => {
     setSavingApiKeys(true);
     setApiKeysSaved(false);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          gemini_api_key: apiKeys.gemini || null,
-          grsai_api_key: apiKeys.grsai || null,
-          preferred_api: apiKeys.preferred,
-        })
-        .eq("user_id", selectedUserId);
-      if (!error) setApiKeysSaved(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-stats?endpoint=save-api-keys&userId=${selectedUserId}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gemini: apiKeys.gemini,
+          grsai: apiKeys.grsai,
+          preferred: apiKeys.preferred,
+        }),
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setApiKeysSaved(true);
+      } else {
+        console.error("Failed to save API keys:", data);
+      }
     } catch (err) {
       console.error("Failed to save API keys:", err);
     } finally {

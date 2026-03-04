@@ -225,6 +225,30 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── SAVE API KEYS (ADMIN ONLY) ───
+    if (endpoint === "save-api-keys" && targetUserId && req.method === "POST") {
+      try {
+        const body = await req.json();
+        const { gemini, grsai, preferred } = body;
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            gemini_api_key: gemini || null,
+            grsai_api_key: grsai || null,
+            preferred_api: preferred || null,
+          })
+          .eq("user_id", targetUserId);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (e) {
+        console.error("save-api-keys error:", e);
+        return new Response(JSON.stringify({ success: false, error: String(e) }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     return new Response(JSON.stringify({ error: "Unknown endpoint" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
