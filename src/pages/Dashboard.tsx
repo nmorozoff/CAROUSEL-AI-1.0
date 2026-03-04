@@ -105,6 +105,8 @@ const Dashboard = () => {
   const [text, setText] = useState("");
   const [cta, setCta] = useState("");
   const [isReadyMode, setIsReadyMode] = useState(false);
+  const [preferredApi, setPreferredApi] = useState<"gemini" | "grsai">("gemini");
+  const [hasApiKeys, setHasApiKeys] = useState<boolean | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("professional");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -173,7 +175,30 @@ const Dashboard = () => {
       }
     };
     load();
+    loadApiSettings();
   }, []);
+
+  const loadApiSettings = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("preferred_api, gemini_api_key, grsai_api_key")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    setPreferredApi((profile?.preferred_api as "gemini" | "grsai") || "gemini");
+    setHasApiKeys(!!(profile?.gemini_api_key || profile?.grsai_api_key));
+  };
+
+  const switchApi = async (api: "gemini" | "grsai") => {
+    setPreferredApi(api);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase
+      .from("profiles")
+      .update({ preferred_api: api })
+      .eq("user_id", session.user.id);
+  };
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
@@ -362,6 +387,34 @@ const Dashboard = () => {
     link.click();
     URL.revokeObjectURL(link.href);
   };
+
+  // Экран ожидания — подписка есть но ключи не назначены
+  if (hasApiKeys === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="glass rounded-2xl p-8 max-w-md w-full text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <span className="text-3xl">⏳</span>
+          </div>
+          <h2 className="font-heading font-bold text-xl">Ваш доступ оплачен ✓</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Мы настраиваем ваш персональный сервис — обычно это занимает <strong>до 1 часа</strong> в рабочее время (10:00–20:00 МСК).
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Если оплата прошла ночью — активируем с утра, как только начнётся рабочий день.
+          </p>
+          
+            href="https://t.me/carousel_support"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Написать в поддержку
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4">
@@ -570,6 +623,30 @@ const Dashboard = () => {
                 </div>
               </button>
             ))}
+          </div>
+        </motion.div>
+
+        {/* API switcher */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="flex items-center justify-between glass rounded-2xl px-4 py-3 mb-4"
+        >
+          <span className="text-xs text-muted-foreground">Сервер генерации:</span>
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <button
+              onClick={() => switchApi("gemini")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${preferredApi === "gemini" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Основной
+            </button>
+            <button
+              onClick={() => switchApi("grsai")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${preferredApi === "grsai" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Резервный 1
+            </button>
           </div>
         </motion.div>
 
