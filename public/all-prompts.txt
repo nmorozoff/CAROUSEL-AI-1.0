@@ -51,6 +51,7 @@
   Вызывает реакцию: "это про меня", "надо глянуть", "что за фигня?"
   Содержит крючок, вопрос, обещание или контраст.
 - Подзаголовок: 1-2 строки, пояснение или интрига.
+- В поле content добавь строку: ЛИСТАЙ →
 
 СЛАЙДЫ 2-6 — КОНТЕНТ (каждый слайд = 1 мысль):
 - Заголовок: 1 строка, ёмкий, с глаголом действия.
@@ -61,10 +62,12 @@
   Рассказывай КАК и ПОЧЕМУ, а не только ЧТО.
   Каждый слайд заканчивается так, чтобы
   хотелось листать дальше (эффект скользкой горки).
+- Макс 120 символов в title, макс 300 символов в content.
 
 СЛАЙД 7 — ПРИЗЫВ:
 - Используй точно эту воронку: {funnel}
 - Коротко, конкретно, без давления.
+- Макс 120 символов в title, макс 200 символов в content.
 
 ═══════════════════════════════════
 ЗАПРЕЩЕНО:
@@ -75,7 +78,7 @@
 - Обрывочные фразы вместо полных мыслей
 - Банальности типа "будьте позитивными"
 - Канцелярит и сложные термины
-- Слово "эксперт", "контент", "полезно"
+- Слова: эксперт, контент, полезно, уникальный
 
 ═══════════════════════════════════
 ОБЯЗАТЕЛЬНО:
@@ -183,7 +186,7 @@ Typography: bold, high contrast, perfectly legible on mobile.
 STYLE GUIDE:
 {styleDesc — см. ниже}
 
-CRITICAL RULE FOR 3D ELEMENTS:
+CRITICAL RULE FOR 3D ELEMENTS (только для стилей с человеком: Профессиональный, Светлый, Инфографика с экспертом, Тёмный, Персонаж):
 - NEVER place 3D objects near or behind the expert's head.
 - 3D elements must be placed to the LEFT or RIGHT side of the frame, at chest/hand level or below — never at head level.
 - Elements should appear to rest on a surface OR float beside the expert's hands, not behind her.
@@ -380,19 +383,29 @@ Atmosphere: Approachable, modern, premium.
 ────────────────────────────────────────
 
 FORMAT: 1080x1350px vertical (4:5 ratio). NOT square.
-VISUAL STYLE: Clean Data Infographic. NO person needed.
-COLOR VARIATION RULE:
-Background: clean light tone, vary per slide:
-white / off-white / light gray only.
-Accent: professional tone from:
-navy / teal / slate / deep blue family.
-Warning elements: warm tone from:
-coral / red-orange / salmon family.
-Typography: Bold modern Montserrat-style sans-serif.
-Visual elements: Clean diagrams, arrows, comparison tables, numbered steps with icons, progress bars, before/after splits.
-Atmosphere: Educational, authoritative, consulting quality.
-When relevant — embed real photo in a rounded card/frame in upper half, infographic elements in lower half.
-Dark navy background (#0D1B2A) throughout.
+VISUAL STYLE: Dark Premium Infographic. NO person needed.
+BACKGROUND: Deep dark charcoal #1A1A2E or #12121F.
+Subtle dark texture — carbon fiber or dark grid pattern at 5% opacity.
+NO light backgrounds. NO white. NO gray. Ever.
+ACCENT COLOR: Vibrant orange #FF6B00 — ONE color only.
+Use for: icons, highlighted text, lines, borders, buttons, badges.
+NO blue, NO green, NO mixed accents. Only orange.
+TYPOGRAPHY:
+Headlines: Bold condensed sans-serif (Bebas Neue style), ALL CAPS, white color.
+Each headline starts with a relevant emoji icon.
+Body text: Regular weight, white #FFFFFF, easy to read.
+Key words in body: highlighted in orange #FF6B00, bold.
+3D ELEMENTS: Photorealistic 3D objects with depth, shadows and neon glow.
+Objects must look premium rendered — NOT flat icons, NOT clipart.
+Examples: glowing warning triangle, 3D rocket, 3D shield, 3D calendar.
+Neon orange glow effect on key 3D objects.
+INFOGRAPHIC ELEMENTS:
+Clean flowcharts with orange arrows.
+Rounded dark cards #2A2A3E for content blocks.
+Orange checkmarks for positive items.
+Red prohibition signs for negative items.
+Orange circle numbers for steps.
+Atmosphere: Educational, authoritative, premium dark theme with neon glow effects.
 
 
 ────────────────────────────────────────
@@ -437,7 +450,7 @@ TEXT PLACEMENT:
 - Line 1: headline — white bold 32px, always in quotes like «Headline».
 - Lines 2-3: body text — white italic 24px, positioned below headline.
 - Do NOT show raw labels like "TITLE:" or "BODY:" — render the text naturally.
-SLIDE 1 ONLY: Large coral/peach colored text on the right side: ЛИСТАЙ → (bold, 50px).
+- ЛИСТАЙ → рендерится из content слайда 1 (если есть в тексте).
 Slides 1-7: Small dark-grey rounded pill in top-right corner containing white text: X/7 (e.g. 1/7, 2/7).
 Lighting: warm cinematic sunset lighting (golden hour).
 Each scene: dramatically expressive characters, emotions readable.

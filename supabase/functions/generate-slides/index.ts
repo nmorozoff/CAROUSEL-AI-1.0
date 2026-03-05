@@ -97,38 +97,57 @@ async function authenticateAndCheckSubscription(req: Request) {
 async function generateSlideContent(userText: string, funnel: string, style: string, apiKey?: string): Promise<{ title: string; content: string }[]> {
   const activeKey = apiKey || GEMINI_API_KEY || "";
   const funnelText = funnel || "подбери сам по теме";
-  const systemPrompt = `Ты помогаешь создавать вирусные карусели для Instagram для экспертов мягких ниш (психологи, коучи, нумерологи).
+  const systemPrompt = `Ты ассистент, который создаёт вирусные посты-карусели для экспертов мягких ниш (психологи, коучи, нумерологи).
 
-ИСХОДНЫЙ ТЕКСТ ЭКСПЕРТА:
+Стиль оформления: ${style}
+
+Создай ровно 7 слайдов на основе текста пользователя.
+
+ТЕКСТ ПОЛЬЗОВАТЕЛЯ:
 ${userText}
 
 ВОРОНКА (последний слайд):
 ${funnelText}
 
-Создай 7 слайдов строго по структуре:
+═══════════════════════════════════
+СТРУКТУРА 7 СЛАЙДОВ:
+═══════════════════════════════════
 
-СЛАЙД 1 — ОБЛОЖКА:
-Заголовок: цепляющий, с болью или интригой, макс 7 слов.
-Подзаголовок: 1-2 строки, интрига или пояснение.
-В поле content добавь строку: ЛИСТАЙ →
+СЛАЙД 1 — ОБЛОЖКА (крючок):
+- Заголовок: 2-3 строки, до 80 символов. Вызывает реакцию: "это про меня", "надо глянуть", "что за фигня?" Содержит крючок, вопрос, обещание или контраст.
+- Подзаголовок: 1-2 строки, пояснение или интрига.
+- В поле content добавь строку: ЛИСТАЙ →
 
-СЛАЙДЫ 2-6 — КОНТЕНТ:
-Заголовок: 1 строка, глагол действия или вопрос.
-Текст: полные предложения, живой разговорный язык.
-Конкретные примеры и детали.
-Каждый слайд заканчивается так, чтобы хотелось листать.
-Макс 120 символов в title, макс 300 символов в content.
+СЛАЙДЫ 2-6 — КОНТЕНТ (каждый слайд = 1 мысль):
+- Заголовок: 1 строка, ёмкий, с глаголом действия. Может быть вопросом, провокацией, парадоксом.
+- Текст: Полные предложения с объяснениями. Живой, разговорный, с дыханием и эмоцией. Конкретные примеры, цифры, детали. Рассказывай КАК и ПОЧЕМУ, а не только ЧТО.
+- Каждый слайд заканчивается так, чтобы хотелось листать дальше (эффект скользкой горки).
+- Макс 120 символов в title, макс 300 символов в content.
 
 СЛАЙД 7 — ПРИЗЫВ:
-Используй воронку: ${funnelText}
-Коротко, конкретно, без давления.
-Макс 120 символов в title, макс 200 символов в content.
+- Используй точно эту воронку: ${funnelText}
+- Коротко, конкретно, без давления.
+- Макс 120 символов в title, макс 200 символов в content.
 
+═══════════════════════════════════
 ЗАПРЕЩЕНО:
-- Списки и буллеты внутри текста
+═══════════════════════════════════
+- Списки из коротких фраз без объяснений
+- Телеграфный стиль ("• создаю базу • получаю результат")
+- Сухие перечисления без раскрытия
+- Обрывочные фразы вместо полных мыслей
+- Банальности типа "будьте позитивными"
+- Канцелярит и сложные термины
 - Слова: эксперт, контент, полезно, уникальный
-- Обрывочные фразы без полных мыслей
-- Банальности
+
+═══════════════════════════════════
+ОБЯЗАТЕЛЬНО:
+═══════════════════════════════════
+- 1 слайд = 1 законченная мысль
+- Каждый слайд мотивирует листать дальше
+- Живые примеры и визуальные образы
+- Текст читается с телефона — коротко, но полноценно
+- Сохраняй цифры, кейсы и детали из исходного текста
 
 Верни строго JSON без markdown:
 [
@@ -144,7 +163,7 @@ ${funnelText}
 Ровно 7 объектов. Только JSON. Без пояснений.`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -169,7 +188,7 @@ ${funnelText}
     console.warn(`Got only ${slides.length} slides (finishReason: ${finishReason}), retrying...`);
     try {
       const retryResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -241,7 +260,7 @@ ${funnel || "Подбери сам по теме"}
 Выдай только готовый текст. Без пояснений.`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -291,7 +310,8 @@ async function generateSeoMeta(userText: string, apiKey?: string): Promise<{ tit
 
 // ─── Auto style enhancement ───
 
-async function generateAutoStyleEnhancement(userText: string, baseStyle: string): Promise<string> {
+async function generateAutoStyleEnhancement(userText: string, baseStyle: string, apiKey?: string): Promise<string> {
+  const activeKey = apiKey || GEMINI_API_KEY || "";
   try {
     const prompt = `Based on this carousel topic: "${userText.substring(0, 200)}"
 And base visual style: "${baseStyle}"
@@ -305,7 +325,7 @@ Generate a SHORT visual enhancement (max 100 words, English only):
 Return ONLY the enhancement text. No headers. No explanations.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -540,7 +560,7 @@ Appearance — use ONLY the uploaded reference photo to determine:
 - Hair color, length and style — copy exactly from photo
 - Glasses — only if visible in photo
 - Age — match the person in photo
-- Skin tone — match exactl
+- Skin tone — match exactly
 - Style: professional blazer matching her coloring
 DO NOT invent appearance. Copy from photo.
 THIS EXACT CHARACTER on every single slide.
@@ -649,7 +669,6 @@ TEXT PLACEMENT:
 - Line 1: headline — white bold 32px, always in quotes like «Headline».
 - Lines 2-3: body text — white italic 24px, positioned below headline.
 - Do NOT show raw labels like "TITLE:" or "BODY:" — render the text naturally.
-SLIDE 1 ONLY: Large coral/peach colored text on the right side: ЛИСТАЙ → (bold, 50px).
 Slides 1-7: Small dark-grey rounded pill in top-right corner: X/7.
 Lighting: warm cinematic sunset lighting (golden hour).
 Each scene: dramatically expressive characters, emotions readable.
@@ -804,6 +823,8 @@ async function generateOneSlideImage(
   const hasPhotos = userPhotos && userPhotos.length > 0;
   const noPersonStyles = ['Схемы & Инфографика', 'Персонаж', 'Сторителлинг'];
   const needsPhoto = !noPersonStyles.includes(style);
+  const personStyles = ['Профессиональный', 'Светлый', 'Инфографика с экспертом', 'Тёмный', 'Персонаж'];
+  const hasPersonInScene = personStyles.includes(style);
 
   const characterBlock = (style === 'Сторителлинг' && characterDescription)
     ? `\nMAIN CHARACTER CONSISTENCY:\nUse exactly this person in this slide:\n${characterDescription}\nSame face, same hair, same appearance.\nDo NOT change or replace this character.\n`
@@ -843,11 +864,11 @@ ${renderTextBlock}
 
 STYLE GUIDE:
 ${styleDesc}
-
+${hasPersonInScene ? `
 CRITICAL RULE FOR 3D ELEMENTS:
 - NEVER place 3D objects near or behind the expert's head.
 - 3D elements must be placed to the LEFT or RIGHT side of the frame, at chest/hand level or below.
-- Keep expert's head and face completely clean — no glows, halos, or objects overlapping the face area.`;
+- Keep expert's head and face completely clean — no glows, halos, or objects overlapping the face area.` : ""}`;
 
   const parts: any[] = [];
 
@@ -903,10 +924,11 @@ CRITICAL RULE FOR 3D ELEMENTS:
 
 // ─── MODE: describe-character ───
 
-async function describeCharacterFromImage(imageBase64: string, mimeType: string): Promise<string> {
+async function describeCharacterFromImage(imageBase64: string, mimeType: string, apiKey?: string): Promise<string> {
+  const activeKey = apiKey || GEMINI_API_KEY || "";
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1027,13 +1049,15 @@ serve(async (req) => {
 - Ровно 7 объектов
 - title = заголовок слайда (без слова Заголовок:)
 - content = основной текст слайда (без слова Текст: или Подзаголовок:)
+- Слайд 1 — обложка: в content добавь "ЛИСТАЙ →" в конце
 - Слайд 7 берёшь как есть, ничего не меняешь
+- Лимиты: title до 120 символов, content слайдов 2-6 до 300 символов, content слайда 7 до 200 символов
 - Только JSON, без пояснений
 ТЕКСТ КАРУСЕЛИ:
 ${rawText}`;
 
         const parseResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userGeminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1069,7 +1093,7 @@ ${rawText}`;
       ]);
       let autoStyleEnhancement = "";
       try {
-        autoStyleEnhancement = await generateAutoStyleEnhancement(userText, style || "Профессиональный");
+        autoStyleEnhancement = await generateAutoStyleEnhancement(userText, style || "Профессиональный", userGeminiKey);
       } catch (e) {
         console.warn("Auto style enhancement failed:", e);
       }
@@ -1168,7 +1192,7 @@ ${rawText}`;
     if (mode === "describe-character") {
       const { imageBase64, mimeType } = body;
       console.log("[describe-character] Extracting character description...");
-      const description = await describeCharacterFromImage(imageBase64, mimeType || "image/png");
+      const description = await describeCharacterFromImage(imageBase64, mimeType || "image/png", userGeminiKey);
       return new Response(JSON.stringify({ success: true, description }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

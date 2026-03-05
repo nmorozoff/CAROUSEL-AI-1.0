@@ -76,14 +76,18 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Payment insert error:", insertError);
-      return new Response(JSON.stringify({ error: "Failed to create payment" }), {
+      const errMsg = insertError.message || "Failed to create payment";
+      return new Response(JSON.stringify({ error: errMsg }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || "";
-    const successURL = origin ? `${origin}/payment?success=1&label=${paymentId}` : "/payment?success=1";
+    const siteUrl = Deno.env.get("SITE_URL")
+      || req.headers.get("origin")
+      || req.headers.get("referer")?.replace(/\/$/, "")
+      || "https://ai-carousel.lovable.app";
+    const successURL = `${siteUrl}/payment?success=1&label=${paymentId}`;
 
     return new Response(
       JSON.stringify({

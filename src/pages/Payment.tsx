@@ -64,11 +64,37 @@ const Payment = () => {
     if (!selectedPlan) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { plan: selectedPlan },
-      });
-      if (error) throw error;
-      if (!data?.formAction || !data?.formData) throw new Error("No form data");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Войдите в аккаунт для оплаты");
+        return;
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ plan: selectedPlan }),
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const errMsg = data?.error || res.statusText || "Ошибка создания платежа";
+        toast.error(errMsg);
+        return;
+      }
+
+      if (!data?.formAction || !data?.formData) {
+        toast.error("Некорректный ответ от сервера");
+        return;
+      }
 
       const form = document.createElement("form");
       form.method = "POST";
