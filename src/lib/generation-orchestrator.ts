@@ -116,7 +116,7 @@ export async function orchestrateGeneration(
   userPhotos: string[],
   callbacks: GenerationCallbacks,
   isReadyMode: boolean = false
-): Promise<{ slides: SlideResult[]; caption: string }> {
+): Promise<{ slides: SlideResult[]; caption: string; characterDescription?: string; autoStyleEnhancement?: string; seoMeta?: { title: string; keywords: string } }> {
   const startTime = Date.now();
 
   // Step 1: Generate texts, caption, SEO
