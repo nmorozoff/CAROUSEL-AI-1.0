@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       successURL: successUrl,
     };
 
-    console.log("Payment created:", { userId: user.id, plan, label });
+    console.log("Payment created:", { userId, plan, label });
 
     return new Response(
       JSON.stringify({
