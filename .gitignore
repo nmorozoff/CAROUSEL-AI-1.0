@@ -25,3 +25,6 @@ dist-ssr
 
 # Migration script (may contain password)
 run-migrations.sh
+
+# Supabase temp files
+supabase/.temp/
