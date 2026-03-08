@@ -72,9 +72,9 @@ Deno.serve(async (req) => {
     }
 
     // Create payment record
-    const label = `${user.id}_${plan}_${Date.now()}`;
+    const label = `${userId}_${plan}_${Date.now()}`;
     const { error: insertError } = await supabaseAdmin.from("payments").insert({
-      user_id: user.id,
+      user_id: userId,
       plan,
       amount: planInfo.amount,
       label,
