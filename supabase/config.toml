@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.generate-slides]
 verify_jwt = false
+
+[functions.yoomoney-notify]
+verify_jwt = false
