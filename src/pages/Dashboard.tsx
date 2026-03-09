@@ -200,11 +200,29 @@ const Dashboard = () => {
     if (!session) return;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("preferred_api, gemini_api_key, grsai_api_key")
+      .select("preferred_api")
       .eq("user_id", session.user.id)
       .maybeSingle();
     setPreferredApi((profile?.preferred_api as "gemini" | "grsai") || "gemini");
-    setHasApiKeys(!!(profile?.gemini_api_key || profile?.grsai_api_key));
+    // Check key existence via RPC-like approach: select only non-null check
+    const { data: keyCheck } = await supabase
+      .from("profiles")
+      .select("gemini_api_key, grsai_api_key")
+      .eq("user_id", session.user.id)
+      .not("gemini_api_key", "is", null)
+      .maybeSingle();
+    // If no row returned with non-null gemini, check grsai
+    if (keyCheck) {
+      setHasApiKeys(true);
+    } else {
+      const { data: grsaiCheck } = await supabase
+        .from("profiles")
+        .select("grsai_api_key")
+        .eq("user_id", session.user.id)
+        .not("grsai_api_key", "is", null)
+        .maybeSingle();
+      setHasApiKeys(!!grsaiCheck);
+    }
   };
 
   const switchApi = async (api: "gemini" | "grsai") => {

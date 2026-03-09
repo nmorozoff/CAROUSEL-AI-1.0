@@ -33,9 +33,9 @@ const App = () => (
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
-            <ProtectedRoute>
+            <AdminRoute>
               <Admin />
-            </ProtectedRoute>
+            </AdminRoute>
           } />
           <Route path="*" element={<NotFound />} />
         </Routes>
