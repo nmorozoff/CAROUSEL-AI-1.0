@@ -741,7 +741,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* API switcher */}
+        {/* Переключатель сервера генерации */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -760,7 +760,7 @@ const Dashboard = () => {
               onClick={() => switchApi("grsai")}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${preferredApi === "grsai" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              Резервный 1
+              Резервный
             </button>
           </div>
         </motion.div>

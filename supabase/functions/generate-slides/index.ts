@@ -22,7 +22,7 @@ function parseJsonResponse(rawText: string): any {
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
   try { return JSON.parse(cleaned); } catch { /* continue */ }
   const jsonStart = cleaned.search(/[\[\{]/);
-  if (jsonStart === -1) throw new Error(`No JSON found in Gemini response: ${cleaned.substring(0, 200)}`);
+  if (jsonStart === -1) throw new Error("Ошибка разбора ответа. Попробуйте позже или обратитесь в поддержку.");
   let jsonStr = cleaned.substring(jsonStart);
   jsonStr = jsonStr.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
   try { return JSON.parse(jsonStr); } catch { /* continue */ }
@@ -45,7 +45,7 @@ function parseJsonResponse(rawText: string): any {
     try { return JSON.parse(jsonStr + '"}'); } catch { /* */ }
     try { return JSON.parse(jsonStr + "}"); } catch { /* */ }
   }
-  throw new Error(`Failed to parse Gemini response: ${cleaned.substring(0, 200)}`);
+  throw new Error("Ошибка разбора ответа. Попробуйте позже или обратитесь в поддержку.");
 }
 
 // ─── Auth helper ───
@@ -188,7 +188,7 @@ ${funnelText}
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Gemini slides API error ${response.status}: ${err}`);
+    throw new Error("Ошибка генерации контента. Попробуйте позже или обратитесь в поддержку.");
   }
 
   const data = await response.json();
@@ -584,50 +584,41 @@ The SAME woman on every slide. Same face, same hair color and style, same skin t
 Same cardigan/jacket color on every slide (e.g. dark green #2D5A27, sage #9CAF88, olive). Lock her appearance from slide 1.
 Do NOT change her appearance, hair, or clothing between slides. Do NOT make her younger or older.
 
-DARK BACKGROUND MUST HOLD THE CHARACTER — CRITICAL:
-The character must be PHYSICALLY GROUNDED in the dark scene. She must NOT appear floating, cut out, or composited onto the background.
-- Character must stand ON a visible dark floor, or sit IN a chair/at a desk — always on a physical surface.
-- Character casts a SOFT SHADOW on the dark floor or surface — this anchors her to the scene.
-- Ambient lighting from the dark environment falls on her — her edges blend with surroundings, no sharp cut-out halo.
-- Her clothing edges blend naturally with the dark background.
-- Include environmental anchors: dark floor visible under her feet, desk edge, chair, window frame — elements that physically contain the character in the space.
-- She was photographed IN this dark office, not added later. Same light sources illuminate both her and the environment.
+CHARACTER MUST BE PHYSICALLY HELD IN THE SCENE — CRITICAL (персонаж должен быть «держан» в кадре):
+The expert MUST look like she was photographed IN this dark office — NOT composited, NOT pasted, NOT floating.
+- Character stands ON visible dark floor or sits IN a chair/at a desk. ALWAYS on a physical surface — feet touching floor, body in chair.
+- Cast a REALISTIC SOFT SHADOW on the floor/surface — this anchors her and proves she belongs there.
+- Lighting: SAME light sources on her AND the room. Her face, clothes, edges receive ambient light from the environment — NO sharp cut-out halo, NO glowing outline.
+- Environmental anchors: dark floor under feet, desk edge, chair legs, window frame — elements that physically contain her.
+- She HOLDS or touches real props (tablet, pen, pointer) — hands and props in natural contact.
 
-SCENE INTEGRATION — choose per slide topic (each scene must have visible floor/surface):
-- Standing ON dark floor at whiteboard in dark office, bright accent on screen, shadow on floor
-- Standing near large window, city lights at night, feet on floor, soft glow from window
-- Sitting AT desk with monitor showing charts, dark office, chair and desk visible
-- Presenting with tablet in hand, standing or sitting ON surface, dark room with accent elements
-- At glass board with sticky notes, dark modern office, floor visible
-- Standing in front of infographic display, feet grounded, accent lighting
-Person's pose matches the slide content — she EXPLAINS, POINTS, SHOWS.
-Expert is lit by the SAME light sources as the dark environment — soft spotlight, window glow, or screen light. Soft shadows for grounding.
+SCENE INTEGRATION — each slide must show her physically in the space:
+- Standing ON dark floor at whiteboard, shadow on floor, accent on screen
+- Sitting AT desk, chair and monitor visible, feet on floor
+- Presenting with tablet IN HAND, standing or sitting ON surface
+- At glass board, feet on floor, office visible
+Person's pose matches content — she EXPLAINS, POINTS, SHOWS. Expert lit by SAME sources as environment.
 
 VISUAL STYLE: Expert Infographic — DARK — premium dark theme (like Sberbank).
 BACKGROUND: Deep dark blue #1A1A2E or #12121F. Subtle texture — blueprint lines or grid at 5% opacity.
 NO light backgrounds. NO white. NO gray backgrounds.
 ACCENT: use the ONE accent color from enhancement on ALL 7 slides. Same hex throughout.
-Use accent for: icons, highlighted text, lines, borders, buttons, badges, arrows.
-PERSON: Place expert in CENTER or LEFT. She is GROUNDED in the dark scene — standing on floor, sitting in chair, or at desk.
-Expert physically holds or interacts with REAL PROPS relevant to the slide topic.
-INFOGRAPHIC ELEMENTS: diagrams, charts, flowcharts with accent arrows. Rounded dark cards #2A2A3E for content blocks.
-Atmosphere: Premium, trustworthy, modern — like banking/fintech infographics.
+PERSON: CENTER or LEFT. GROUNDED in scene. Holds/interacts with REAL PROPS.
+INFOGRAPHIC ELEMENTS: diagrams, charts, flowcharts with accent arrows. Rounded dark cards #2A2A3E.
 
 TYPOGRAPHY — CRITICAL:
 Same font for headlines on ALL 7 slides. Same font for body text on ALL 7 slides.
 Headlines: bold sans-serif, white #FFFFFF. Body: regular weight, white #FFFFFF.
-Key words highlighted in accent color. Use fonts from enhancement.
-NO mixed fonts between slides. NO varying sizes.
+Key words highlighted in accent color. NO mixed fonts. NO varying sizes.
 
 LANGUAGE RULE — CRITICAL:
-ALL text rendered in the image must be in Russian only.
-This includes: headlines, body text, labels, diagram captions,
-infographic elements, chart labels, arrows with text.
-ZERO English words anywhere on any slide.
-If a concept has no Russian equivalent — transliterate it into Russian.
+ALL text in Russian only. ZERO English. Transliterate if needed.
 
-RENDER QUALITY:
-8K resolution, no AI artifacts, crisp edges, premium dark theme, professional infographic style.`,
+RENDER QUALITY — CRITICAL (супер реалистичное качество):
+ULTRA-SHARP, SUPER REALISTIC, professional photography quality.
+ZERO grain. ZERO digital noise. ZERO film grain. NO artificial noise.
+8K resolution equivalent, crisp edges, natural skin texture, no AI artifacts.
+Premium dark theme, no plastic look, photorealistic.`,
 
     'Тёмный': `FORMAT: 1080x1350px vertical (4:5 ratio). NOT square.
 
@@ -862,13 +853,44 @@ CONSISTENCY: Same face and hair across ALL 7 slides.
 }
 
 // ─── Grsai (Резервное API) ───
+// GRSAI/Nano Banana expects SHORT prompts (~500-800 chars). Long prompts may fail (moderation, token limit).
+function buildGrsaiPrompt(
+  slideNumber: number,
+  title: string,
+  content: string,
+  style: string,
+  hasPhotos: boolean,
+  characterDescription?: string,
+  accentColor?: string
+): string {
+  const isFirst = slideNumber === 1;
+  const isLast = slideNumber === 7;
+  const charHint = characterDescription ? ` Same person: ${characterDescription.substring(0, 120)}.` : "";
+  const accent = accentColor ? ` Accent color: ${accentColor}.` : "";
+  const textBlock = `Text in image (Russian): ${title}. ${(content || "").substring(0, 150)}`;
+
+  const styleShort: Record<string, string> = {
+    "Профессиональный": `Professional psychology office. Woman from reference in cozy office, armchair, bookshelf, warm light.${charHint} ${textBlock}. Photorealistic, 4:5 vertical.`,
+    "Светлый": `Light Scandinavian interior. Woman from reference in bright room, white walls, plants, soft daylight.${charHint} ${textBlock}. Editorial photo, 4:5 vertical.`,
+    "Инфографика с экспертом — светлая": `Light infographic. Woman expert from reference in modern office, standing at whiteboard or desk.${charHint} ${textBlock}. Clean design, 4:5 vertical.`,
+    "Инфографика с экспертом — тёмная": `Dark infographic, premium style. Woman expert from reference in dark office (#1A1A2E), standing on floor or at desk, soft shadow.${charHint}${accent} White text. ${textBlock}. Photorealistic, no grain, 4:5 vertical.`,
+    "Тёмный": `Cinematic dark portrait. Woman from reference in warm dark room, burgundy/amber tones, candlelight.${charHint} ${textBlock}. Film look, 4:5 vertical.`,
+    "Персонаж": `3D illustrated character from reference photo. Same face and style. ${textBlock}. Cartoon 3D render, 4:5 vertical.`,
+    "Схемы & Инфографика": `Infographic diagram, dark background, flowcharts, no person. ${textBlock}. Modern design, 4:5 vertical.`,
+    "Сторителлинг": `Story scene, cinematic. ${textBlock}. Photographic, 4:5 vertical.`,
+  };
+  const base = styleShort[style] || `Professional slide. ${textBlock}. 4:5 vertical, photorealistic.`;
+  const cover = isFirst ? " COVER slide, eye-catching." : "";
+  const cta = isLast ? " CTA slide, call to action." : "";
+  return `${base}${cover}${cta}`;
+}
 
 async function generateImageGrsai(
   prompt: string,
   userPhotos: string[],
   apiKey: string
 ): Promise<{ imageBase64: string; mimeType: string }> {
-  if (!apiKey) throw new Error("Резервный API не настроен. Обратитесь в поддержку.");
+  if (!apiKey) throw new Error("Сервис генерации изображений не настроен. Обратитесь в поддержку.");
 
   const requestBody: Record<string, unknown> = {
     model: GRSAI_MODEL,
@@ -878,11 +900,12 @@ async function generateImageGrsai(
     shutProgress: true,
   };
 
-  // imageSize supported by nano-banana-2, nano-banana-pro
+  // imageSize: 1K default, 2K/4K for nano-banana-2 and nano-banana-pro. Use 1K for stability.
   if (["nano-banana-2", "nano-banana-pro"].includes(GRSAI_MODEL)) {
     (requestBody as any).imageSize = "1K";
   }
 
+  // urls: Reference image URL or Base64 (per API docs). Use raw base64.
   if (userPhotos && userPhotos.length > 0) {
     (requestBody as any).urls = userPhotos.slice(0, 3).map((p: string) => {
       const base64 = p.startsWith("data:") ? p.replace(/^data:[^;]+;base64,/, "") : p;
@@ -907,24 +930,24 @@ async function generateImageGrsai(
   try {
     initData = JSON.parse(rawText);
   } catch {
-    throw new Error("Grsai API error " + response.status + ": " + rawText.substring(0, 300));
+    throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
   }
 
   if (!response.ok) {
     const msg = initData?.msg || initData?.error || rawText.substring(0, 300);
-    throw new Error("Grsai API error " + response.status + ": " + msg);
+    throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
   }
 
   if (initData?.code !== undefined && initData.code !== 0) {
     const msg = initData?.msg || initData?.error || "Unknown error";
     console.error("[Grsai] Create failed:", JSON.stringify(initData));
-    throw new Error("Grsai: " + msg);
+    throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
   }
 
   const taskId = initData?.data?.id || initData?.id;
   if (!taskId) {
     console.error("[Grsai] No task id in response:", JSON.stringify(initData));
-    throw new Error("Grsai: не получен task id. Ответ: " + (initData?.msg || "неизвестно"));
+    throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
   }
 
   console.log("[Grsai] Task created: " + taskId);
@@ -957,7 +980,7 @@ async function generateImageGrsai(
 
     if (pollData?.code !== undefined && pollData.code !== 0) {
       if (pollData.code === -22) {
-        throw new Error("Grsai: задача не найдена (id: " + taskId + ")");
+        throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
       }
       console.warn("[Grsai] Poll " + (i + 1) + " code=" + pollData.code + ": " + (pollData?.msg || ""));
       continue;
@@ -972,19 +995,20 @@ async function generateImageGrsai(
     }
     if (result?.status === "failed") {
       const reason = result?.failure_reason || result?.error || "unknown";
-      console.error("[Grsai] Task failed:", reason);
-      throw new Error("Grsai: генерация не удалась — " + reason);
+      console.error("[Grsai] Task failed:", { failure_reason: result?.failure_reason, error: result?.error, full: JSON.stringify(result) });
+      const reasonRu = reason === "output_moderation" ? "модерация контента" : reason === "input_moderation" ? "модерация промпта" : "неизвестная ошибка";
+      throw new Error("Генерация не удалась: " + reasonRu + ". Попробуйте изменить контент или обратитесь в поддержку.");
     }
   }
 
   if (!imageUrl) {
-    throw new Error("Grsai: таймаут — изображение не получено за 6 минут");
+    throw new Error("Превышено время ожидания генерации. Попробуйте позже или обратитесь в поддержку.");
   }
 
   console.log("[Grsai] Downloading: " + imageUrl);
   const imgResponse = await fetch(imageUrl);
   if (!imgResponse.ok) {
-    throw new Error("Grsai: не удалось загрузить изображение (HTTP " + imgResponse.status + ")");
+    throw new Error("Не удалось загрузить изображение. Попробуйте позже или обратитесь в поддержку.");
   }
   const arrayBuffer = await imgResponse.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
@@ -1018,8 +1042,8 @@ async function generateOneSlideImage(
   const expertInfographicStyles = ['Инфографика с экспертом — светлая', 'Инфографика с экспертом — тёмная'];
   const needsCharacterBlock = characterDescription && (
     style === 'Сторителлинг' ||
-    (style === 'Персонаж' && slideNumber > 1) ||
-    (expertInfographicStyles.includes(style) && slideNumber > 1)
+    (['Персонаж', ...expertInfographicStyles].includes(style) && slideNumber >= 1) ||
+    ['Профессиональный', 'Светлый', 'Тёмный'].includes(style)
   );
   const characterBlock = needsCharacterBlock
     ? `\nMAIN CHARACTER CONSISTENCY — CRITICAL:\nUse EXACTLY this character in this slide. Do NOT vary.\n${characterDescription}\nSame face, same hair color, same hair style, same glasses, same skin tone, same age.\nSame cardigan/blazer color on ALL slides (e.g. dark green, sage, olive). Do NOT change or replace this character.\n`
@@ -1089,12 +1113,20 @@ CRITICAL RULE FOR 3D ELEMENTS:
   const grsaiKey = apiKeys?.grsaiKey || "";
 
   if (activeApi === "grsai") {
-    console.log(`[image] Slide ${slideNumber} — using Резервный 1 API (model: ${GRSAI_MODEL})`);
-    const fullPrompt = parts
-      .filter((p: any) => p.text)
-      .map((p: any) => p.text)
-      .join("\n");
-    return await generateImageGrsai(fullPrompt, hasPhotos && needsPhoto ? userPhotos : [], grsaiKey);
+    if (!grsaiKey || grsaiKey.trim() === "") {
+      throw new Error("Сервис генерации изображений не настроен. Обратитесь в поддержку — администратор должен назначить ключ в профиле.");
+    }
+    console.log(`[image] Slide ${slideNumber} — using GRSAI (model: ${GRSAI_MODEL})`);
+    const grsaiPrompt = buildGrsaiPrompt(
+      slideNumber,
+      title,
+      content || "",
+      style,
+      hasPhotos && needsPhoto,
+      characterDescription,
+      parsed?.accent || undefined
+    );
+    return await generateImageGrsai(grsaiPrompt, hasPhotos && needsPhoto ? userPhotos : [], grsaiKey);
   }
 
   const response = await fetch(
@@ -1111,7 +1143,7 @@ CRITICAL RULE FOR 3D ELEMENTS:
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Gemini image API error ${response.status}: ${err}`);
+    throw new Error("Ошибка сервиса генерации изображений. Попробуйте позже или обратитесь в поддержку.");
   }
 
   const data = await response.json();
@@ -1269,7 +1301,7 @@ ${rawText}`;
             }),
           }
         );
-        if (!parseResponse.ok) throw new Error("Gemini parse error: " + await parseResponse.text());
+        if (!parseResponse.ok) throw new Error("Ошибка разбора ответа. Попробуйте позже или обратитесь в поддержку.");
         const parseData = await parseResponse.json();
         const rawParsed = parseData.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const slideContents = parseJsonResponse(rawParsed);

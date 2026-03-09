@@ -40,6 +40,19 @@ async function callEdgeFunction(token: string, body: Record<string, any>): Promi
 
   if (!response.ok) {
     const errText = await response.text();
+    try {
+      const parsed = JSON.parse(errText);
+      if (parsed?.error && typeof parsed.error === "string") {
+        throw new Error(parsed.error);
+      }
+    } catch (e: any) {
+      if (e instanceof SyntaxError) {
+        throw new Error(errText || `HTTP ${response.status}`);
+      }
+      if (e.message && e.message !== errText) {
+        throw e;
+      }
+    }
     throw new Error(errText || `HTTP ${response.status}`);
   }
 
@@ -138,6 +151,18 @@ export async function orchestrateGeneration(
   let allSlides: SlideResult[];
 
   if (isStorytelling || isPersonazh || isExpertInfographic) {
+    const needsPersonFromReference = (isPersonazh || isExpertInfographic) && userPhotos.length > 0;
+
+    if (needsPersonFromReference) {
+      callbacks.onStatus("Извлечение описания персонажа...");
+      const charData = await callEdgeFunction(token, {
+        mode: "describe-character",
+        imageBase64: userPhotos[0],
+        mimeType: "image/jpeg",
+      });
+      characterDescription = charData.description || "";
+    }
+
     const statusMsg = isStorytelling ? "Сторителлинг: генерация слайда 1..." : isPersonazh ? "Персонаж: генерация слайда 1..." : "Инфографика: генерация слайда 1...";
     callbacks.onStatus(statusMsg);
     const slide1Data = await callEdgeFunction(token, {
@@ -147,11 +172,12 @@ export async function orchestrateGeneration(
       content: slideTexts[0].content,
       style,
       userPhotos,
+      characterDescription: needsPersonFromReference ? characterDescription : undefined,
       autoStyleEnhancement,
     });
     callbacks.onSlideReady(1);
 
-    if (slide1Data.success && slide1Data.imageBase64) {
+    if (isStorytelling && slide1Data.success && slide1Data.imageBase64) {
       callbacks.onStatus("Извлечение описания персонажа...");
       const charData = await callEdgeFunction(token, {
         mode: "describe-character",
@@ -185,6 +211,19 @@ export async function orchestrateGeneration(
       ...remainingSlides,
     ];
   } else {
+    const personFromPhotoStyles = ["Профессиональный", "Светлый", "Тёмный"];
+    const needsCharacterFromPhoto = personFromPhotoStyles.includes(style) && userPhotos.length > 0;
+
+    if (needsCharacterFromPhoto) {
+      callbacks.onStatus("Извлечение описания персонажа...");
+      const charData = await callEdgeFunction(token, {
+        mode: "describe-character",
+        imageBase64: userPhotos[0],
+        mimeType: "image/jpeg",
+      });
+      characterDescription = charData.description || "";
+    }
+
     const items = slideTexts.map((s, i) => ({
       slideNumber: i + 1,
       title: s.title,
@@ -192,7 +231,7 @@ export async function orchestrateGeneration(
     }));
 
     allSlides = await generateInBatches(
-      items, 1, token, style, userPhotos, undefined, callbacks, autoStyleEnhancement
+      items, 1, token, style, userPhotos, needsCharacterFromPhoto ? characterDescription : undefined, callbacks, autoStyleEnhancement
     );
   }
 
