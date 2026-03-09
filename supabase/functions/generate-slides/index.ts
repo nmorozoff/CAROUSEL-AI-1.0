@@ -521,6 +521,11 @@ Person is NATURALLY IN THE SCENE — not a cutout, not pasted onto white backgro
 She physically EXISTS in this environment with matching lighting and shadows.
 Her shoes touch the floor naturally when standing. Her shadow falls on the floor. She was photographed IN this office.
 
+CHARACTER CONSISTENCY — SAME EXPERT ON ALL 7 SLIDES:
+The SAME woman on every slide. Same face, same hair color and style, same skin tone, same age.
+Same cardigan/jacket color on every slide (e.g. dark green #2D5A27, sage #9CAF88, olive). Lock her appearance from slide 1.
+Do NOT change her appearance, hair, or clothing between slides. Do NOT make her younger or older.
+
 SCENE INTEGRATION — choose per slide topic:
 - Standing at whiteboard/flipchart in bright office, marker in hand, pointing to diagram
 - Sitting at wooden desk with open notebook, pen, laptop — bright coworking space
@@ -573,6 +578,11 @@ Use ONLY the photo uploaded by the user.
 Preserve exactly: face, hair, skin, appearance.
 Person is NATURALLY IN THE SCENE — not a cutout, not pasted onto dark background.
 She physically EXISTS in this environment with matching lighting and shadows.
+
+CHARACTER CONSISTENCY — SAME EXPERT ON ALL 7 SLIDES:
+The SAME woman on every slide. Same face, same hair color and style, same skin tone, same age.
+Same cardigan/jacket color on every slide (e.g. dark green #2D5A27, sage #9CAF88, olive). Lock her appearance from slide 1.
+Do NOT change her appearance, hair, or clothing between slides. Do NOT make her younger or older.
 
 DARK BACKGROUND MUST HOLD THE CHARACTER — CRITICAL:
 The character must be PHYSICALLY GROUNDED in the dark scene. She must NOT appear floating, cut out, or composited onto the background.
@@ -1005,8 +1015,14 @@ async function generateOneSlideImage(
   const personStyles = ['Профессиональный', 'Светлый', 'Инфографика с экспертом — светлая', 'Инфографика с экспертом — тёмная', 'Тёмный', 'Персонаж'];
   const hasPersonInScene = personStyles.includes(style);
 
-  const characterBlock = characterDescription && (style === 'Сторителлинг' || (style === 'Персонаж' && slideNumber > 1))
-    ? `\nMAIN CHARACTER CONSISTENCY — CRITICAL:\nUse EXACTLY this character in this slide. Do NOT vary.\n${characterDescription}\nSame face, same hair color, same hair style, same glasses, same skin tone, same age.\nSame blazer color (e.g. orange) on ALL slides. Do NOT change or replace this character.\n`
+  const expertInfographicStyles = ['Инфографика с экспертом — светлая', 'Инфографика с экспертом — тёмная'];
+  const needsCharacterBlock = characterDescription && (
+    style === 'Сторителлинг' ||
+    (style === 'Персонаж' && slideNumber > 1) ||
+    (expertInfographicStyles.includes(style) && slideNumber > 1)
+  );
+  const characterBlock = needsCharacterBlock
+    ? `\nMAIN CHARACTER CONSISTENCY — CRITICAL:\nUse EXACTLY this character in this slide. Do NOT vary.\n${characterDescription}\nSame face, same hair color, same hair style, same glasses, same skin tone, same age.\nSame cardigan/blazer color on ALL slides (e.g. dark green, sage, olive). Do NOT change or replace this character.\n`
     : "";
 
   const photoIntegrationBlock = getPhotoIntegrationBlock(style, hasPhotos && needsPhoto);
@@ -1123,7 +1139,7 @@ async function describeCharacterFromImage(imageBase64: string, mimeType: string,
             role: "user",
             parts: [
               { inlineData: { mimeType, data: imageBase64 } },
-              { text: "Describe the main character in this image in detail: hair color, hair style, hair length, face features, skin tone, age, glasses (style: round/rectangular, color), blazer/jacket color. Be specific so the same character can be reproduced exactly. Return only a short English description, 2-3 sentences maximum." },
+              { text: "Describe the main character in this image in detail: hair color, hair style, hair length, face features, skin tone, age, glasses (style: round/rectangular, color). Specify the exact cardigan/blazer/jacket color (e.g. dark green, sage, olive, teal) and clothing style. Be specific so the same character can be reproduced exactly on all slides. Return only a short English description, 2-3 sentences maximum." },
             ],
           }],
           generationConfig: { temperature: 0.2, maxOutputTokens: 256 },

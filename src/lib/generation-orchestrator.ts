@@ -134,10 +134,12 @@ export async function orchestrateGeneration(
 
   const isStorytelling = style === "Сторителлинг";
   const isPersonazh = style === "Персонаж";
+  const isExpertInfographic = style === "Инфографика с экспертом — светлая" || style === "Инфографика с экспертом — тёмная";
   let allSlides: SlideResult[];
 
-  if (isStorytelling || isPersonazh) {
-    callbacks.onStatus(isStorytelling ? "Сторителлинг: генерация слайда 1..." : "Персонаж: генерация слайда 1...");
+  if (isStorytelling || isPersonazh || isExpertInfographic) {
+    const statusMsg = isStorytelling ? "Сторителлинг: генерация слайда 1..." : isPersonazh ? "Персонаж: генерация слайда 1..." : "Инфографика: генерация слайда 1...";
+    callbacks.onStatus(statusMsg);
     const slide1Data = await callEdgeFunction(token, {
       mode: "image",
       slideNumber: 1,
@@ -160,6 +162,7 @@ export async function orchestrateGeneration(
     }
 
     const batchSize = isStorytelling ? 3 : 1;
+    // Generate slides 2-7
     const remainingItems = slideTexts.slice(1).map((s, i) => ({
       slideNumber: i + 2,
       title: s.title,
