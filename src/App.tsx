@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionGuard from "./components/SubscriptionGuard";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
